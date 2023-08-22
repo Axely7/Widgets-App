@@ -1,3 +1,4 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,6 +13,63 @@ class InifiniteScrollScreen extends StatefulWidget {
 
 class _InifiniteScrollScreenState extends State<InifiniteScrollScreen> {
   List<int> imagesIds = [1, 2, 3, 4, 5];
+  final ScrollController scrollController = ScrollController();
+  bool isLoading = false;
+  bool isMounted = true;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    scrollController.addListener(() {
+      if ((scrollController.position.pixels + 500) >=
+          scrollController.position.maxScrollExtent) {
+        loadNextPage();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    scrollController.dispose();
+    isMounted = false;
+    super.dispose();
+  }
+
+  Future loadNextPage() async {
+    if (isLoading) return;
+    isLoading = true;
+    setState(() {});
+    await Future.delayed(const Duration(seconds: 2));
+
+    addFiveImages();
+    isLoading = false;
+
+    if (!isMounted) return;
+    setState(() {});
+  }
+
+  void addFiveImages() {
+    final lastId = imagesIds.last;
+    imagesIds.addAll([1, 2, 3, 4, 5].map((e) => lastId + e));
+  }
+
+  Future<void> onRefresh() async {
+    isLoading = true;
+    setState(() {});
+
+    await Future.delayed(const Duration(seconds: 3));
+    if (!isMounted) return;
+
+    final lastId = imagesIds.last;
+    imagesIds.clear();
+    imagesIds.add(lastId + 1);
+    addFiveImages();
+    isLoading = false;
+
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,23 +79,35 @@ class _InifiniteScrollScreenState extends State<InifiniteScrollScreen> {
         context: context,
         removeTop: true,
         removeBottom: true,
-        child: ListView.builder(
-          itemCount: imagesIds.length,
-          itemBuilder: (context, index) {
-            return FadeInImage(
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: 300,
-              placeholder: const AssetImage('assets/Images/jar-loading.gif'),
-              image: NetworkImage(
-                  'https://picsum.photos/id/${imagesIds[index]}/500/300'),
-            );
-          },
+        child: RefreshIndicator(
+          edgeOffset: 10,
+          strokeWidth: 2,
+          onRefresh: onRefresh,
+          child: ListView.builder(
+            controller: scrollController,
+            itemCount: imagesIds.length,
+            itemBuilder: (context, index) {
+              return FadeInImage(
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: 300,
+                placeholder: const AssetImage('assets/Images/jar-loading.gif'),
+                image: NetworkImage(
+                    'https://picsum.photos/id/${imagesIds[index]}/500/300'),
+              );
+            },
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.pop(),
-        child: const Icon(Icons.arrow_back_ios_new_outlined),
+        // child: const Icon(Icons.arrow_back_ios_new_outlined),
+        child: !isLoading
+            ? FadeIn(child: const Icon(Icons.arrow_back_ios_new_outlined))
+            : SpinPerfect(
+                infinite: true,
+                child: const Icon(Icons.refresh_rounded),
+              ),
       ),
     );
   }
