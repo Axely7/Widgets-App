@@ -58,5 +58,10 @@ const appMenuItems = <MenuItems>[
       title: 'Riverpod',
       subTitle: 'Pantalla para Riverpor',
       link: '/counter_screen',
-      icon: Icons.add)
+      icon: Icons.add),
+  MenuItems(
+      title: 'Cambiar tema de la aplicación',
+      subTitle: 'Pantalla para Riverpor',
+      link: '/theme_changer_screen',
+      icon: Icons.color_lens_outlined)
 ];
